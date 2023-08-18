@@ -3,14 +3,20 @@ package com.godknows.gkcommerce.services;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.godknows.gkcommerce.dtos.ProductDTO;
 import com.godknows.gkcommerce.entities.Product;
 import com.godknows.gkcommerce.repositories.ProductRepository;
+import com.godknows.gkcommerce.services.exceptions.DatabaseException;
+import com.godknows.gkcommerce.services.exceptions.ResourceNotFoundException;
+
+import jakarta.persistence.EntityNotFoundException;
 
 @Service
 public class ProductService {
@@ -21,14 +27,14 @@ public class ProductService {
 	@Transactional(readOnly = true)
 	public ProductDTO findById(Long id) {
 		Optional<Product> result = productRepository.findById(id);
-		Product product = result.get();
+		Product product = result.orElseThrow( () -> new ResourceNotFoundException("Recurso não encontrado"));
 		ProductDTO dto = new ProductDTO(product);
 		return dto;
 	}
 	/*OR ELSE
 	 * 	@Transactional(readOnly = true)
 	 * 	public ProductDTO findById(Long id) {
-	 * 		Product product = productRepository.findById(id).get();
+	 * 		Product product = productRepository.findById(id).orElseThrow( ()-> new ResourceNotFoundException("Recurso não encontrado"));
 	 * 		return new ProductDTO(product);
 	 * 	}
 	 */
@@ -51,15 +57,28 @@ public class ProductService {
 	
 	@Transactional
 	public ProductDTO update(Long id, ProductDTO dto) {
-		Product entity = productRepository.getReferenceById(id);
-		copyToDto(dto, entity);
-		entity = productRepository.save(entity);
-		return new ProductDTO(entity);
+		try {
+			Product entity = productRepository.getReferenceById(id);
+			copyToDto(dto, entity);
+			entity = productRepository.save(entity);
+			return new ProductDTO(entity);
+		}
+		catch(EntityNotFoundException e) {
+			throw new ResourceNotFoundException("Recurso não encontrado.");
+		}
 	}
 	
-	@Transactional
+	@Transactional(propagation = Propagation.SUPPORTS)
 	public void delete (Long id) {
-		productRepository.deleteById(id);
+		if(!productRepository.existsById(id)) {
+			throw new ResourceNotFoundException("Recurso não encontrado.");
+		}
+		try {
+			productRepository.deleteById(id);	
+		}
+		catch(DataIntegrityViolationException e) {
+			throw new DatabaseException("Falha de integridade referencial");
+		}
 	 }
 	
 	
