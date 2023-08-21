@@ -10,8 +10,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.godknows.gkcommerce.dtos.CategoryDTO;
 import com.godknows.gkcommerce.dtos.ProductDTO;
 import com.godknows.gkcommerce.dtos.ProductMinDTO;
+import com.godknows.gkcommerce.entities.Category;
 import com.godknows.gkcommerce.entities.Product;
 import com.godknows.gkcommerce.repositories.ProductRepository;
 import com.godknows.gkcommerce.services.exceptions.DatabaseException;
@@ -89,6 +91,14 @@ public class ProductService {
 		entity.setDescription(dto.getDescription());
 		entity.setPrice(dto.getPrice());
 		entity.setImgUrl(dto.getImgUrl());
+		
+		entity.getCategories().clear();
+		for(CategoryDTO catDto : dto.getCategories()) {
+			Category cat = new Category();
+			cat.setId(catDto.getId());
+			cat.setName(catDto.getName());
+			entity.getCategories().add(cat);
+		}
 	}
 
 }
