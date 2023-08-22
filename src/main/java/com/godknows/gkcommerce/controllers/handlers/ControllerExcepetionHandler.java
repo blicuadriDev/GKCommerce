@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import com.godknows.gkcommerce.dtos.CustomErrorDTO;
 import com.godknows.gkcommerce.dtos.ValidationErrorDTO;
 import com.godknows.gkcommerce.services.exceptions.DatabaseException;
+import com.godknows.gkcommerce.services.exceptions.ForbiddenException;
 import com.godknows.gkcommerce.services.exceptions.ResourceNotFoundException;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -41,6 +42,14 @@ public class ControllerExcepetionHandler {
 		for(FieldError f : e.getBindingResult().getFieldErrors()) {
 			err.addError(f.getField(), f.getDefaultMessage());
 		}
+		return ResponseEntity.status(status).body(err);
+	}
+	
+	
+	@ExceptionHandler(ForbiddenException.class)
+	public ResponseEntity<CustomErrorDTO> forbidden (ForbiddenException e, HttpServletRequest request){
+		HttpStatus status = HttpStatus.FORBIDDEN;
+		CustomErrorDTO err = new CustomErrorDTO(Instant.now(), status.value(), e.getMessage(), request.getRequestURI());
 		return ResponseEntity.status(status).body(err);
 	}
 	
