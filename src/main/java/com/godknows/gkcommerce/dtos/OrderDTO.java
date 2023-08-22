@@ -8,6 +8,10 @@ import com.godknows.gkcommerce.entities.Order;
 import com.godknows.gkcommerce.entities.OrderItem;
 import com.godknows.gkcommerce.entities.OrderStatus;
 
+import jakarta.validation.constraints.NotEmpty;
+
+
+
 public class OrderDTO {
 	
 	private Long id;
@@ -18,6 +22,7 @@ public class OrderDTO {
 	
 	private PaymentDTO payment;
 
+	@NotEmpty(message="O pedido deve ter pelo menos 1 item.")
 	private List<OrderItemDTO> items = new ArrayList<>();
 	
 	
