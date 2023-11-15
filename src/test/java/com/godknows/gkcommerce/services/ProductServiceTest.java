@@ -15,6 +15,7 @@ import com.godknows.gkcommerce.dtos.ProductDTO;
 import com.godknows.gkcommerce.entities.Product;
 import com.godknows.gkcommerce.factories.ProductFactory;
 import com.godknows.gkcommerce.repositories.ProductRepository;
+import com.godknows.gkcommerce.services.exceptions.ResourceNotFoundException;
 
 @ExtendWith(SpringExtension.class)
 public class ProductServiceTest {
@@ -37,17 +38,26 @@ public class ProductServiceTest {
 		product = ProductFactory.createProduct(productName);
 		
 		Mockito.when(repository.findById(existingId)).thenReturn(Optional.of(product));
+		Mockito.when(repository.findById(unexistingId)).thenReturn(Optional.empty());
 	}
 	
 	
 	@Test
-	public void findByIdShouldReturnProductDTOWhenIdExistis() {
+	public void findByIdShouldReturnProductDTOWhenIdExists() {
 		
 		ProductDTO result = service.findById(existingId);
 		
 		Assertions.assertNotNull(result);
 		Assertions.assertEquals(result.getId(), product.getId());
 		Assertions.assertEquals(result.getName(), product.getName());
+	}
+	
+	@Test
+	public void findByIdShouldThrowResourceNotFoundExceptionWhenIdDoesNotExists() {
+		
+		Assertions.assertThrows(ResourceNotFoundException.class, ()->{
+			service.findById(unexistingId);
+		});
 	}
 
 }
