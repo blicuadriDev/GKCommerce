@@ -60,6 +60,9 @@ public class ProductServiceTest {
 		Mockito.when(repository.searchByName(any(),(Pageable)any())).thenReturn(page);
 		
 		Mockito.when(repository.save(any())).thenReturn(product);
+		
+		Mockito.when(repository.getReferenceById(existingId)).thenReturn(product);
+		Mockito.when(repository.getReferenceById(unexistingId)).thenThrow(EntityNotFoundException.class);
 	}
 	
 	
@@ -102,4 +105,23 @@ public class ProductServiceTest {
 		Assertions.assertEquals(result.getName(), productDTO.getName());
 	}
 
+	@Test
+	public void updateShouldReturnProductDTOWhenIdExists() {
+		
+		ProductDTO result = service.update(existingId, productDTO);
+		
+		Assertions.assertNotNull(result);
+		Assertions.assertEquals(result.getId(), productDTO.getId());
+		Assertions.assertEquals(result.getName(), productDTO.getName());
+	}
+	
+	@Test
+	public void updateShouldThrowsResourceNotFoundExceptionWhenIdDoesNotExists() {
+		Assertions.assertThrows(ResourceNotFoundException.class, ()->{
+			service.update(unexistingId, productDTO);
+		});
+	}
+	
+	
+	
 }
