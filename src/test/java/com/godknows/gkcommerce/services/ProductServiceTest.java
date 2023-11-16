@@ -25,6 +25,8 @@ import com.godknows.gkcommerce.factories.ProductFactory;
 import com.godknows.gkcommerce.repositories.ProductRepository;
 import com.godknows.gkcommerce.services.exceptions.ResourceNotFoundException;
 
+import jakarta.persistence.EntityNotFoundException;
+
 @ExtendWith(SpringExtension.class)
 public class ProductServiceTest {
 	
@@ -36,8 +38,8 @@ public class ProductServiceTest {
 	
 	private Long existingId, unexistingId;
 	private String productName;
-	
 	private Product product;
+	private ProductDTO productDTO;
 	private PageImpl<Product> page;
 
 	
@@ -45,14 +47,19 @@ public class ProductServiceTest {
 	private void setUp() {
 		existingId = 1L;
 		unexistingId = 2L;
+		
 		productName = "PlyStation 5";
+		
 		product = ProductFactory.createProduct(productName);
+		productDTO = new ProductDTO(product);
 		page = new PageImpl<>(List.of(product));
 		
 		Mockito.when(repository.findById(existingId)).thenReturn(Optional.of(product));
 		Mockito.when(repository.findById(unexistingId)).thenReturn(Optional.empty());
 		
 		Mockito.when(repository.searchByName(any(),(Pageable)any())).thenReturn(page);
+		
+		Mockito.when(repository.save(any())).thenReturn(product);
 	}
 	
 	
@@ -83,6 +90,16 @@ public class ProductServiceTest {
 		Assertions.assertNotNull(result);
 		Assertions.assertEquals(result.getSize(), 1);
 		Assertions.assertEquals(result.iterator().next().getName(), productName);
+	}
+	
+	@Test
+	public void insertShouldReturnProductDTO() {
+		
+		ProductDTO result = service.insert(productDTO);
+		
+		Assertions.assertNotNull(result);
+		Assertions.assertEquals(result.getId(), productDTO.getId());
+		Assertions.assertEquals(result.getName(), productDTO.getName());
 	}
 
 }
