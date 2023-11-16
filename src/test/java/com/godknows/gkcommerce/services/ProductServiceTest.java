@@ -12,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -23,6 +24,7 @@ import com.godknows.gkcommerce.dtos.ProductMinDTO;
 import com.godknows.gkcommerce.entities.Product;
 import com.godknows.gkcommerce.factories.ProductFactory;
 import com.godknows.gkcommerce.repositories.ProductRepository;
+import com.godknows.gkcommerce.services.exceptions.DatabaseException;
 import com.godknows.gkcommerce.services.exceptions.ResourceNotFoundException;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -36,7 +38,7 @@ public class ProductServiceTest {
 	@Mock
 	private ProductRepository repository;
 	
-	private Long existingId, unexistingId;
+	private Long existingId, unexistingId, dependentId;
 	private String productName;
 	private Product product;
 	private ProductDTO productDTO;
@@ -47,6 +49,7 @@ public class ProductServiceTest {
 	private void setUp() {
 		existingId = 1L;
 		unexistingId = 2L;
+		dependentId = 3L;
 		
 		productName = "PlyStation 5";
 		
@@ -63,6 +66,13 @@ public class ProductServiceTest {
 		
 		Mockito.when(repository.getReferenceById(existingId)).thenReturn(product);
 		Mockito.when(repository.getReferenceById(unexistingId)).thenThrow(EntityNotFoundException.class);
+		
+		Mockito.when(repository.existsById(existingId)).thenReturn(true);
+		Mockito.when(repository.existsById(unexistingId)).thenReturn(false);
+		Mockito.when(repository.existsById(dependentId)).thenReturn(true);
+		
+		Mockito.doThrow(DataIntegrityViolationException.class).when(repository).deleteById(dependentId);
+		Mockito.doNothing().when(repository).deleteById(unexistingId);
 	}
 	
 	
@@ -122,6 +132,26 @@ public class ProductServiceTest {
 		});
 	}
 	
+	@Test
+	public void deleteShouldDoNothingWhenIdExists() {
+		
+		Assertions.assertDoesNotThrow(()-> {
+			service.delete(existingId);
+		});
+	}
 	
+	@Test
+	public void deleteShouldThrowResosurceNotfoundExceptionWhenIdExists() {
+		Assertions.assertThrows(ResourceNotFoundException.class, ()-> {
+			service.delete(unexistingId);
+		});
+	}
+	
+	@Test
+	public void deleteShouldThrowDatabaseExceptionWhenDependentId() {
+		Assertions.assertThrows(DatabaseException.class, ()-> {
+			service.delete(dependentId);
+		});
+	}
 	
 }
