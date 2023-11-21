@@ -3,12 +3,9 @@ package com.godknows.gkcommerce.services;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,12 +14,16 @@ import com.godknows.gkcommerce.entities.Role;
 import com.godknows.gkcommerce.entities.User;
 import com.godknows.gkcommerce.projections.UserDetailsProjection;
 import com.godknows.gkcommerce.repositories.UserRepository;
+import com.godknows.gkcommerce.utils.CustomUserUtil;
 
 @Service
 public class UserService implements UserDetailsService{
 	
 	@Autowired
 	private UserRepository userRepository;
+	
+	@Autowired
+	private CustomUserUtil customUserUtil;
 
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -44,13 +45,8 @@ public class UserService implements UserDetailsService{
 	}
 	
 	protected User authenticated() {
-		
 		try {
-			//get authenticated user works here cause we implemented JWT context security and we can get claims set on AuthorizationServerConfig class
-			Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-			Jwt jwtPrincipal = (Jwt) authentication.getPrincipal();
-			String username = jwtPrincipal.getClaim("username");
-			
+			String username = customUserUtil.getLoggedUsername();
 			return userRepository.findByEmail(username).get(); 
 		}
 		catch (Exception e) {
