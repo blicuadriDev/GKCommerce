@@ -2,6 +2,7 @@ package com.godknows.gkcommerce.services;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,6 +20,7 @@ import com.godknows.gkcommerce.factories.UserDetailsFactory;
 import com.godknows.gkcommerce.factories.UserFactory;
 import com.godknows.gkcommerce.projections.UserDetailsProjection;
 import com.godknows.gkcommerce.repositories.UserRepository;
+import com.godknows.gkcommerce.utils.CustomUserUtil;
 
 @ExtendWith(SpringExtension.class)
 public class UserServiceTest {
@@ -28,6 +30,9 @@ public class UserServiceTest {
 	
 	@Mock
 	private UserRepository repository;
+	
+	@Mock
+	private CustomUserUtil userUtil;
 	
 	
 	private String existingUsername, unexistingUsername;
@@ -45,6 +50,9 @@ public class UserServiceTest {
 		
 		Mockito.when(repository.searchUserAndRoleByEmail(existingUsername)).thenReturn(userDetails);
 		Mockito.when(repository.searchUserAndRoleByEmail(unexistingUsername)).thenReturn(new ArrayList<>());
+		
+		Mockito.when(repository.findByEmail(existingUsername)).thenReturn(Optional.of(user));
+		Mockito.when(repository.findByEmail(unexistingUsername)).thenReturn(Optional.empty());
 	}
 	
 	
@@ -63,6 +71,28 @@ public class UserServiceTest {
 		
 		Assertions.assertThrows(UsernameNotFoundException.class, ()->{
 			service.loadUserByUsername(unexistingUsername);
+		});
+	}
+	
+	@Test
+	public void authenticatedShouldReturnUserWhenUsernameExists() {
+		
+		Mockito.when(userUtil.getLoggedUsername()).thenReturn(existingUsername);
+		
+		User result = service.authenticated();
+		
+		Assertions.assertNotNull(result);
+		Assertions.assertEquals(result.getUsername(), existingUsername);
+		
+	}
+	
+	@Test
+	public void authenticatedShouldThrowUsernameNotFoundExceptionWhenUsernameDoesNotExists() {
+		
+		Mockito.doThrow(ClassCastException.class).when(userUtil).getLoggedUsername();
+		
+		Assertions.assertThrows(UsernameNotFoundException.class, ()->{
+			service.authenticated();
 		});
 	}
 
