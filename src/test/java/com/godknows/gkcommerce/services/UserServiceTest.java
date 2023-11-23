@@ -1,5 +1,7 @@
 package com.godknows.gkcommerce.services;
 
+import static org.mockito.Mockito.mockitoSession;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -15,6 +17,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import com.godknows.gkcommerce.dtos.UserDTO;
 import com.godknows.gkcommerce.entities.User;
 import com.godknows.gkcommerce.factories.UserDetailsFactory;
 import com.godknows.gkcommerce.factories.UserFactory;
@@ -93,6 +96,28 @@ public class UserServiceTest {
 		
 		Assertions.assertThrows(UsernameNotFoundException.class, ()->{
 			service.authenticated();
+		});
+	}
+	
+	@Test
+	public void getMeShouldReturnUserDTOWhenUserIsAuthenticated() {
+		UserService spyUserService = Mockito.spy(service);
+		Mockito.doReturn(user).when(spyUserService).authenticated();
+		
+		UserDTO result = spyUserService.getMe();
+		
+		Assertions.assertNotNull(result);
+		Assertions.assertEquals(result.getEmail(), existingUsername);
+	}
+	
+	@Test
+	public void getMeShouldThrowUsernameNotFoundExceptionWhenUserIsNotAuthenticated() {
+		UserService spyUserService = Mockito.spy(service);
+		Mockito.doThrow(UsernameNotFoundException.class).when(spyUserService).authenticated();
+		
+		Assertions.assertThrows(UsernameNotFoundException.class, () ->{
+			@SuppressWarnings("unused")
+			UserDTO result = spyUserService.getMe();
 		});
 	}
 
