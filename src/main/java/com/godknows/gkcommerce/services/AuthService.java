@@ -14,8 +14,16 @@ public class AuthService {
 	
 	public void validateSelfOrAdmin(Long userId) {
 		User loggedUser = userService.authenticated();
-		if( !loggedUser.hasRole("ROLE_ADMIN") && !loggedUser.getId().equals(userId)) {
-			throw new ForbiddenException("Acesso negado!");
+		
+//		refactoring and breaking in two conditional for unit test purposes:
+//		if( !loggedUser.hasRole("ROLE_ADMIN") && !loggedUser.getId().equals(userId)) {
+//			throw new ForbiddenException("Acesso negado!");
+//		}
+		if(loggedUser.hasRole("ROLE_ADMIN")) {
+			return;
+		}
+		if(!loggedUser.getId().equals(userId)) {
+			throw new ForbiddenException("Acess denied! Should be self or admin");
 		}
 	}
 
